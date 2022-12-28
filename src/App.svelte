@@ -3,10 +3,12 @@
     import RGB from "./shader-editor/lib/nodes/RGB";
 	import {onMount} from "svelte";
     import Canvas from "./shader-editor/lib/canvas/Canvas";
+    import MakeVector from "./shader-editor/lib/nodes/MakeVector";
 
-    const nodes = [new Material(), new RGB(), new RGB(), new RGB()]
+    const nodes = [new Material(), new MakeVector(), new RGB(), new RGB()]
 	const canvas = new Canvas()
 	onMount(() => {
+
         canvas.initialize(<HTMLCanvasElement>document.getElementById("canvas"))
         canvas.nodes = nodes
 

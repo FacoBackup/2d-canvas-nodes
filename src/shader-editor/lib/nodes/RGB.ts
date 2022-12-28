@@ -1,7 +1,8 @@
 import ShaderNode from "./ShaderNode"
-import NODE_TYPES from "../material-compiler/templates/NODE_TYPES"
+
 import checkGlslFloat from "../../utils/check-glsl-float"
 import DATA_TYPES from "../../static/DATA_TYPES";
+import NODE_TYPES from "../../static/NODE_TYPES";
 
 
 export default class RGB extends ShaderNode {

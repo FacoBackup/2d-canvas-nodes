@@ -1,7 +1,7 @@
 import Canvas from "../lib/canvas/Canvas";
 
 
-export function listenTo(event, nodeBbox, parent) {
+export default function dragNode(event, nodeBbox, parent) {
     const parentBBox = parent.getBoundingClientRect(),
         bounding = {
             x: parent.scrollLeft - parentBBox.left + nodeBbox.x - event.clientX,

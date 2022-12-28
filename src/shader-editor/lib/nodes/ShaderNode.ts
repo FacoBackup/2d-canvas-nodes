@@ -1,6 +1,7 @@
 import type MutableObject from "../../static/MutableObject";
-import RoundedRect from "../../utils/RoundedRect";
 import drawIO from "../../utils/draw-IO";
+import drawRoundedRect from "../../utils/draw-rounded-rect";
+import drawNodeHeader from "../../utils/draw-node-header";
 
 const types = {
     vec2: 0,
@@ -28,11 +29,11 @@ export interface Input {
 }
 
 
+const HEADER_HEIGHT = 25
 export default class ShaderNode {
     [key: string]: any
     canBeDeleted = true
     dynamicInputs = false
-    size = 0
     width =200
     height = 35
     x: number
@@ -49,7 +50,7 @@ export default class ShaderNode {
         this.uniformName = "DYNAMIC_" + this.id.replaceAll("-", "_")
         this.output = output
         this.inputs = inputs ? inputs : []
-        this.height = 35 + Math.max(this.output.length, this.inputs.length) * 20
+        this.height = HEADER_HEIGHT + Math.max(this.output.length, this.inputs.filter(e => e.accept !== undefined).length) * 20
         this.dynamicInputs = dynamicInputs
     }
 
@@ -58,17 +59,19 @@ export default class ShaderNode {
         return typesInverted[min]
     }
     checkClick(x, y){
-        return x >= this.x && x < this.x + this.width && y >= this.y && y < this.y + this.height
+        return x >= this.x && x < this.x + this.width && y >= this.y && y < this.y + HEADER_HEIGHT
     }
-    drawToCanvas(ctx:CanvasRenderingContext2D){
-        RoundedRect.draw(ctx, this.x, this.y, this.width, this.height, 1, 5)
+    drawToCanvas(ctx:CanvasRenderingContext2D, selectionMap:Map<string,boolean>){
+        drawRoundedRect(ctx, this,  3, selectionMap.get(this.id))
+        drawNodeHeader(ctx, this)
         for(let j = 0; j < this.output.length; j++){
             const C = this.output[j]
-            drawIO(ctx, true, this.x , this.y,  this.width, j, C.label, !C.disabled)
+            drawIO(ctx, true, this, j, C)
         }
         for(let j = 0; j < this.inputs.length; j++){
             const C = this.inputs[j]
-            drawIO(ctx, false, this.x , this.y, this.width, j, C.label, !C.disabled)
+            if(C.accept)
+            drawIO(ctx, false,this,j, C)
         }
     }
 }

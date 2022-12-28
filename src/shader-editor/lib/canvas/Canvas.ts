@@ -1,4 +1,4 @@
-import {listenTo} from "../../utils/drag-node";
+import dragNode from "../../utils/drag-node";
 
 export default class Canvas {
     static grid = 20
@@ -22,8 +22,8 @@ export default class Canvas {
     private ctx?: CanvasRenderingContext2D
     private canvas?: HTMLCanvasElement
     private initialized = false
-
     private nodesOnDrag = []
+    private selectionMap = new Map<string, boolean>()
 
     updateCanvasSize() {
         this.canvas.width = Canvas.width
@@ -65,18 +65,23 @@ export default class Canvas {
                 const N = this.nodes
                 const X = (e.clientX - BBox.x) / Canvas.scale,
                     Y = (e.clientY - BBox.y) / Canvas.scale
+
+                if (!e.ctrlKey)
+                    this.selectionMap.clear()
+
+                let canSelectMore = true
                 for (let i = 0; i < N.length; i++) {
                     const node = N[i]
-                    console.log(
-                        node.x,
-                        node.y,
-                        X, Y
-                    )
                     if (node.checkClick(X, Y)) {
-                        this.nodesOnDrag.push(listenTo(e, node, canvas.parentElement))
-                        break
-                    }
+                        if(canSelectMore) {
+                            this.nodesOnDrag.push(dragNode(e, node, canvas.parentElement))
+                            this.selectionMap.set(node.id, true)
+                            canSelectMore = false
+                        }
+                    } else
+                        node.isSelected = false
                 }
+                this.clear()
             }
 
             document.addEventListener("mousemove", handleMouseMove)
@@ -94,8 +99,10 @@ export default class Canvas {
         canvas.addEventListener("wheel", e => {
             e.preventDefault()
             let s = Canvas.scale
+            // @ts-ignore
             if (e.wheelDelta > 0 && s < 3)
                 s += s * .1
+            // @ts-ignore
             else if (e.wheelDelta < 0 && s >= .5)
                 s -= s * .1
             Canvas.scale = s
@@ -119,7 +126,7 @@ export default class Canvas {
     private draw() {
         for (let i = 0; i < this.nodes.length; i++) {
             const node = this.nodes[i]
-            node.drawToCanvas(this.ctx)
+            node.drawToCanvas(this.ctx, this.selectionMap)
         }
         // BezierCurve(this.ctx, 10, 100, 10, 100)
     }

@@ -1,11 +1,13 @@
 import Canvas from "../lib/canvas/Canvas";
 
-export default class RoundedRect {
-    static draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, bW: number, r: number) {
+export default function drawRoundedRect(ctx: CanvasRenderingContext2D, node, r: number, isSelected) {
+        const w = node.width, h = node.height, x = node.x, y = node.y
+
+
         if (w < 2 * r) r = w / 2;
         if (h < 2 * r) r = h / 2;
-        ctx.lineWidth = bW
-        ctx.strokeStyle = Canvas.borderColor;
+        ctx.lineWidth = isSelected ? 2 : 1
+        ctx.strokeStyle = isSelected ? "darkorange" : Canvas.borderColor;
         ctx.fillStyle = Canvas.rectColor;
 
         ctx.beginPath();
@@ -18,4 +20,3 @@ export default class RoundedRect {
         ctx.stroke()
         ctx.fill()
     }
-}
