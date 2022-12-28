@@ -1,4 +1,10 @@
 import dragNode from "../../utils/drag-node";
+import getMousedownEvent from "../../utils/get-mousedown-event";
+import getCanvasZoomEvent from "../../utils/get-canvas-zoom-event";
+import type ShaderNode from "../nodes/ShaderNode";
+import type ShaderLink from "../nodes/ShaderLink";
+import drawLink from "../../utils/draw-link";
+
 
 export default class Canvas {
     static grid = 20
@@ -9,7 +15,17 @@ export default class Canvas {
     static fontSize = 10
     static rectColor = "#353535"
     static borderColor = "#6b6b6b"
-    #nodes = []
+    #nodes:ShaderNode[] = []
+    #links:ShaderLink[] = []
+    set links(nodes) {
+        this.#links = nodes
+        this.clear()
+    }
+
+    get links() {
+        return this.#links
+    }
+
     set nodes(nodes) {
         this.#nodes = nodes
         this.clear()
@@ -19,11 +35,11 @@ export default class Canvas {
         return this.#nodes
     }
 
-    private ctx?: CanvasRenderingContext2D
+    ctx?: CanvasRenderingContext2D
     private canvas?: HTMLCanvasElement
     private initialized = false
-    private nodesOnDrag = []
-    private selectionMap = new Map<string, boolean>()
+    nodesOnDrag: { onMouseUp:Function,onMouseMove:Function }[] = []
+    selectionMap = new Map<string, ShaderNode>()
 
     updateCanvasSize() {
         this.canvas.width = Canvas.width
@@ -38,81 +54,16 @@ export default class Canvas {
         this.initialized = true
         this.canvas = canvas
         this.ctx = canvas.getContext("2d")
-
         this.updateCanvasSize()
 
-        let isOnDrag = false
         canvas.addEventListener("contextmenu", e => e.preventDefault())
+        document.addEventListener("mousedown", getMousedownEvent(this, canvas))
 
-        const handleMouseMove = (event) => {
-            if (isOnDrag) {
-                canvas.parentElement.scrollTop -= event.movementY
-                canvas.parentElement.scrollLeft -= event.movementX
-            } else {
-                const N = this.nodesOnDrag
-                for (let i = 0; i < N.length; i++) {
-                    N[i].onMouseMove(event)
-                }
-                this.clear()
-            }
-        }
-
-        document.addEventListener("mousedown", e => {
-            const BBox = canvas.getBoundingClientRect()
-            isOnDrag = e.button === 2
-
-            if (!isOnDrag) {
-                const N = this.nodes
-                const X = (e.clientX - BBox.x) / Canvas.scale,
-                    Y = (e.clientY - BBox.y) / Canvas.scale
-
-                if (!e.ctrlKey)
-                    this.selectionMap.clear()
-
-                let canSelectMore = true
-                for (let i = 0; i < N.length; i++) {
-                    const node = N[i]
-                    if (node.checkClick(X, Y)) {
-                        if(canSelectMore) {
-                            this.nodesOnDrag.push(dragNode(e, node, canvas.parentElement))
-                            this.selectionMap.set(node.id, true)
-                            canSelectMore = false
-                        }
-                    } else
-                        node.isSelected = false
-                }
-                this.clear()
-            }
-
-            document.addEventListener("mousemove", handleMouseMove)
-            document.addEventListener("mouseup", e => {
-                isOnDrag = false
-                const N = this.nodesOnDrag
-                for (let i = 0; i < N.length; i++) {
-                    N[i].onMouseUp()
-                }
-                this.nodesOnDrag = []
-                document.removeEventListener("mousemove", handleMouseMove)
-            }, {once: true})
-
-        })
-        canvas.addEventListener("wheel", e => {
-            e.preventDefault()
-            let s = Canvas.scale
-            // @ts-ignore
-            if (e.wheelDelta > 0 && s < 3)
-                s += s * .1
-            // @ts-ignore
-            else if (e.wheelDelta < 0 && s >= .5)
-                s -= s * .1
-            Canvas.scale = s
-            canvas.style.backgroundSize = `${20 * s}px ${20 * s}px`
-            this.clear()
-        }, {passive: false})
+        canvas.addEventListener("wheel", getCanvasZoomEvent(this, canvas), {passive: false})
         this.clear()
     }
 
-    private clear() {
+    clear() {
         const ctx = this.ctx
         const canvas = this.canvas
         const scale = Canvas.scale || .01
@@ -124,10 +75,19 @@ export default class Canvas {
     }
 
     private draw() {
-        for (let i = 0; i < this.nodes.length; i++) {
-            const node = this.nodes[i]
+        const L = this.#links
+        const LS = L.length
+        for (let i = 0; i < LS; i++) {
+            const link = L[i]
+            drawLink(this.ctx, link)
+        }
+
+        const N = this.#nodes
+        const NS = N.length
+        for (let i = 0; i < NS; i++) {
+            const node = N[i]
             node.drawToCanvas(this.ctx, this.selectionMap)
         }
-        // BezierCurve(this.ctx, 10, 100, 10, 100)
+
     }
 }

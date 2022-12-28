@@ -1,16 +1,35 @@
 import Canvas from "../lib/canvas/Canvas";
+import NODE_TYPES from "../static/NODE_TYPES";
 
-export default function drawNodeHeader(ctx:CanvasRenderingContext2D, node){
+export default function drawNodeHeader(ctx: CanvasRenderingContext2D, node) {
     const name = node.name
-    ctx.beginPath()
-    ctx.font =  "10px Arial";
-    ctx.fillStyle = "#f0f0f0"
+    ctx.beginPath();
+
+    let fontFill = "#f0f0f0"
+    switch (node.type) {
+        case NODE_TYPES.STATIC:
+            ctx.fillStyle = "#555"
+            break
+        case NODE_TYPES.FUNCTION:
+            ctx.fillStyle = "purple"
+            break
+        case NODE_TYPES.OUTPUT:
+            ctx.fillStyle = "green"
+            break
+        case NODE_TYPES.VARIABLE:
+            ctx.fillStyle = "red"
+            break
+    }
+    ctx.strokeStyle = Canvas.borderColor
+    ctx.lineWidth = .5
+    ctx.roundRect(node.x, node.y, node.width, 23, [3, 3, 0, 0])
+    ctx.stroke()
+    ctx.fill()
+
+    ctx.font = "bold 10px Arial";
+    ctx.fillStyle = fontFill
     ctx.fillText(name, node.x + 5, node.y + Canvas.fontSize + 5);
 
-    ctx.lineWidth = 1
-    ctx.moveTo(node.x, node.y+23)
-    ctx.lineTo(node.x + node.width, node.y + 23)
-    ctx.stroke()
     ctx.closePath()
 
 }

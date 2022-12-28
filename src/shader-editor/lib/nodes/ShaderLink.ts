@@ -1,83 +1,36 @@
-import getBezierCurve from "../../utils/get-bezier-curve";
+import type ShaderNode from "./ShaderNode";
+import type {Output} from "./ShaderNode";
 
 export default class ShaderLink {
-    // TODO - INTERFACE FOR NODE ATTRIBUTE
-    targetRef
-    sourceRef
-    target?:string
-    source?:string
-    #targetElement?:HTMLElement
-    #sourceElement?:HTMLElement
-    #canvasElement?:HTMLElement
-    #linkElement?:HTMLElement
-
-    readonly CONTEXT_ID?:string
-    identifier?:string
-    targetKey?:string
-    sourceKey?:string
-    sourceType?:string
-    targetType?:string
+    targetRef:Output
+    sourceRef:Output
+    targetNode:ShaderNode
+    sourceNode:ShaderNode
+    target:string
+    source:string
+    identifier:string
+    targetKey:string
+    sourceKey:string
+    sourceType:string
+    targetType:string
 
     static getPattern(l) {
         return l.target + "-" + l.source
     }
 
-    constructor(target, source, CONTEXT_ID) {
-        this.targetRef = target
-        this.sourceRef = source
-        this.CONTEXT_ID = CONTEXT_ID
+    constructor(target:ShaderNode, source:ShaderNode, tR:Output, sR:Output) {
+        this.targetNode = target
+        this.sourceNode = source
+        this.targetRef = tR
+        this.sourceRef = sR
 
-        this.target = this.targetRef.id + this.targetRef.attribute.key
-        this.source = this.sourceRef.id + this.sourceRef.attribute.key
+        this.target = this.targetRef.id + this.targetRef.key
+        this.source = this.sourceRef.id + this.sourceRef.key
         this.identifier = ShaderLink.getPattern(this)
 
-        this.#sourceElement = document.getElementById(this.source)
-        this.#targetElement = document.getElementById(this.target)
-        this.#canvasElement = document.getElementById(CONTEXT_ID)
-        this.#linkElement = document.getElementById(this.identifier)
-
-        this.targetKey = this.targetRef.attribute.key
-        this.sourceKey = this.sourceRef.attribute.key
-        this.sourceType = this.sourceRef.attribute.type
-        this.targetType = this.targetRef.attribute.type
-
-
-    }
-
-    updatePath() {
-        if (!this.#sourceElement)
-            this.#sourceElement = document.getElementById(this.source)
-        if (!this.#targetElement)
-            this.#targetElement = document.getElementById(this.target)
-        if (!this.#linkElement)
-            this.#linkElement = document.getElementById(this.identifier)
-        if (!this.#canvasElement)
-            this.#canvasElement = document.getElementById(this.CONTEXT_ID)
-
-        if (!this.#targetElement || !this.#sourceElement || !this.#canvasElement || !this.#linkElement)
-            return
-        let canvasBBox = this.#canvasElement.getBoundingClientRect()
-        const bounding = {
-            x: this.#canvasElement.scrollLeft - canvasBBox.left,
-            y: this.#canvasElement.scrollTop - canvasBBox.top
-        }
-
-        const scale = 1
-        const sourceBBox = this.#sourceElement.getBoundingClientRect(),
-            targetBBox = this.#targetElement.getBoundingClientRect()
-
-        const OFFSET = 7.5
-        const curve = getBezierCurve(
-            {
-                x: (sourceBBox.x + bounding.x + OFFSET) / scale,
-                y: (sourceBBox.y + bounding.y + OFFSET) / scale
-            },
-            {
-                x1: (targetBBox.x + bounding.x + OFFSET) / scale,
-                y1: (targetBBox.y + bounding.y + OFFSET) / scale
-            })
-
-        if (this.#linkElement.getAttribute("d") !== curve)
-            this.#linkElement.setAttribute("d", curve)
+        this.targetKey = this.targetRef.key
+        this.sourceKey = this.sourceRef.key
+        this.sourceType = this.sourceRef.type
+        this.targetType = this.targetRef.type
     }
 }

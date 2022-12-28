@@ -24,7 +24,7 @@ export default class RGB extends ShaderNode {
     }
 
     get type() {
-        return NODE_TYPES.STATIC
+        return this.uniform ?NODE_TYPES.VARIABLE : NODE_TYPES.STATIC
     }
 
     async getInputInstance(index, uniforms, uniformValues) {
