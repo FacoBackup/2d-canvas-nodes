@@ -1,17 +1,18 @@
-import Canvas from "../lib/canvas/Canvas";
+import Canvas from "../lib/Canvas";
 
-export default function getCanvasZoomEvent(canvasAPI:Canvas, canvas:HTMLCanvasElement):(this: HTMLCanvasElement, ev: WheelEvent) => void{
+export default function getCanvasZoomEvent(canvasAPI: Canvas, canvas: HTMLCanvasElement): (this: HTMLCanvasElement, ev: WheelEvent) => void {
+    let localScale = 1
     return e => {
         e.preventDefault()
-        let s = Canvas.scale
         // @ts-ignore
-        if (e.wheelDelta > 0 && s < 3)
-            s += s * .1
+        if (e.wheelDelta > 0 && localScale < 3)
+            localScale += localScale * .1
         // @ts-ignore
-        else if (e.wheelDelta < 0 && s >= .5)
-            s -= s * .1
-        Canvas.scale = s
-        canvas.style.backgroundSize = `${20 * s}px ${20 * s}px`
+        else if (e.wheelDelta < 0 && localScale >= .5)
+            localScale -= localScale * .1
+
+        Canvas.scale = localScale
+        canvas.style.backgroundSize = `${20 * localScale}px ${20 * localScale}px`
         canvasAPI.clear()
     }
 }

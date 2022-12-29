@@ -1,5 +1,6 @@
-import Canvas from "../lib/canvas/Canvas";
+import Canvas from "../lib/Canvas";
 import NODE_TYPES from "../static/NODE_TYPES";
+import IO_RADIUS from "../static/IO_RADIUS";
 
 export default function drawNodeHeader(ctx: CanvasRenderingContext2D, node) {
     const name = node.name
@@ -27,9 +28,16 @@ export default function drawNodeHeader(ctx: CanvasRenderingContext2D, node) {
     ctx.fill()
 
     ctx.font = "bold 10px Arial";
-    ctx.fillStyle = fontFill
-    ctx.fillText(name, node.x + 5, node.y + Canvas.fontSize + 5);
 
+    ctx.fillStyle = fontFill
+    ctx.fillText(name, node.x + IO_RADIUS, node.y + 15);
+
+    if(!node.uniform){
+        const length = ctx.measureText(name + "T").width
+        ctx.font = "6px Arial";
+        ctx.fillStyle = "#999"
+        ctx.fillText("(DYNAMIC)", node.x + length, node.y + 15);
+    }
     ctx.closePath()
 
 }

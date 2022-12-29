@@ -1,8 +1,6 @@
-import Canvas from "../lib/canvas/Canvas";
-import type ShaderLink from "../lib/nodes/ShaderLink";
-
 export default function drawBezierCurve(ctx:CanvasRenderingContext2D, x1,x2,y1,y2){
-    const pivot = x1 < x2 ? 1 + (x2 - 1)/2 : x2 + (x1 - x2)/2
+    const diff = Math.abs((x1 - x2)/2)
+    const pivot = Math.min(x1, x2) + diff
 
     ctx.lineWidth = 2
     ctx.beginPath();

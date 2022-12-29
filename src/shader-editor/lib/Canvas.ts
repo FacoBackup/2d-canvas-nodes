@@ -1,9 +1,9 @@
-import dragNode from "../../utils/drag-node";
-import getMousedownEvent from "../../utils/get-mousedown-event";
-import getCanvasZoomEvent from "../../utils/get-canvas-zoom-event";
-import type ShaderNode from "../nodes/ShaderNode";
-import type ShaderLink from "../nodes/ShaderLink";
-import drawLink from "../../utils/draw-link";
+import dragNode from "../utils/drag-node";
+import getMousedownEvent from "../utils/get-mousedown-event";
+import getCanvasZoomEvent from "../utils/get-canvas-zoom-event";
+import type ShaderNode from "./nodes/ShaderNode";
+import type ShaderLink from "./nodes/ShaderLink";
+import drawLink from "../utils/draw-link";
 
 
 export default class Canvas {
@@ -40,6 +40,7 @@ export default class Canvas {
     private initialized = false
     nodesOnDrag: { onMouseUp:Function,onMouseMove:Function }[] = []
     selectionMap = new Map<string, ShaderNode>()
+    lastSelection:ShaderNode|undefined
 
     updateCanvasSize() {
         this.canvas.width = Canvas.width
@@ -86,7 +87,7 @@ export default class Canvas {
         const NS = N.length
         for (let i = 0; i < NS; i++) {
             const node = N[i]
-            node.drawToCanvas(this.ctx, this.selectionMap)
+            node.drawToCanvas(this.ctx, this)
         }
 
     }

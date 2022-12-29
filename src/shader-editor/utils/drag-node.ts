@@ -1,12 +1,12 @@
-import Canvas from "../lib/canvas/Canvas";
+import Canvas from "../lib/Canvas";
 import type MutableObject from "../static/MutableObject";
 import type ShaderNode from "../lib/nodes/ShaderNode";
 
 
 export default function dragNode(event:MouseEvent, nodeBbox:ShaderNode, parent:HTMLElement, parentBBox:MutableObject):{onMouseUp:Function, onMouseMove:Function} {
     const bounding = {
-            x: parent.scrollLeft - parentBBox.left + nodeBbox.x - event.clientX,
-            y: parent.scrollTop - parentBBox.top + nodeBbox.y - event.clientY
+            x: parent.scrollLeft - parentBBox.left + nodeBbox.x * Canvas.scale - event.clientX,
+            y: parent.scrollTop - parentBBox.top + nodeBbox.y* Canvas.scale - event.clientY
         }
 
     return {
@@ -23,7 +23,6 @@ export default function dragNode(event:MouseEvent, nodeBbox:ShaderNode, parent:H
 
         },
         onMouseMove: ev => {
-            console.log("IM HERE")
             nodeBbox.x = Math.round(((ev.clientX + bounding.x) / Canvas.scale) / Canvas.grid) * Canvas.grid
             nodeBbox.y = Math.round(((ev.clientY + bounding.y) / Canvas.scale) / Canvas.grid) * Canvas.grid
 

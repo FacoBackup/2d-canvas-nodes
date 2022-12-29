@@ -1,11 +1,12 @@
 import dragNode from "./drag-node";
-import Canvas from "../lib/canvas/Canvas";
+import Canvas from "../lib/Canvas";
 import type {Output} from "../lib/nodes/ShaderNode";
 import type MutableObject from "../static/MutableObject";
 import drawBezierCurve from "./draw-bezier-curve";
 import IO_RADIUS from "../static/IO_RADIUS";
 import ShaderLink from "../lib/nodes/ShaderLink";
 import type ShaderNode from "../lib/nodes/ShaderNode";
+import handleLink from "./handle-link";
 
 export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasElement): (this: HTMLCanvasElement, ev: WheelEvent) => void {
     let isOnScroll = false
@@ -20,7 +21,6 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
             canvas.parentElement.scrollLeft -= event.movementX
         } else {
             const S = N.length
-
             if (IO !== undefined) {
                 tempLink.x1 = (event.clientX + parentBBox.x) / Canvas.scale
                 tempLink.y1 = (event.clientY + parentBBox.y) / Canvas.scale
@@ -46,8 +46,10 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
             const X = (e.clientX - BBox.x) / Canvas.scale
             const Y = (e.clientY - BBox.y) / Canvas.scale
 
-            if (!e.ctrlKey)
+            if (!e.ctrlKey) {
+                canvasAPI.lastSelection = undefined
                 canvasAPI.selectionMap.clear()
+            }
             else
                 canvasAPI.selectionMap.forEach(node => {
                     canvasAPI.nodesOnDrag.push(dragNode(e, node, canvas.parentElement, parentBBox))
@@ -70,39 +72,26 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
                         }
                     }
                     canvasAPI.selectionMap.set(node.id, node)
+                    canvasAPI.lastSelection = node
                     break
                 }
             }
+            if(canvasAPI.nodesOnDrag.length > 0 || IO)
+                canvasAPI.ctx.canvas.style.cursor = "grabbing"
             canvasAPI.clear()
         }
         document.addEventListener("mousemove", handleMouseMove)
         document.addEventListener("mouseup", e => {
-            if (IO) {
-                const N = canvasAPI.nodes
-                const X = (e.clientX - BBox.x) / Canvas.scale
-                const Y = (e.clientY - BBox.y) / Canvas.scale
-
-                for (let i = N.length - 1; i >= 0; i--) {
-                    const node = N[i]
-                    const onBody = node.checkBodyClick(X, Y)
-                    if (onBody) {
-                        const targetIO = node.checkAgainstIO(X, Y, true)
-                        console.log(targetIO)
-                        if (targetIO)
-                            canvasAPI.links.push(new ShaderLink(node,IO[0], targetIO, IO[1]))
-                        break
-                    }
-                }
-            }
+            if (IO) handleLink(canvasAPI, e, BBox.x, BBox.y, IO[0], IO[1])
             isOnScroll = false
             IO = undefined
             const N = canvasAPI.nodesOnDrag
-            for (let i = 0; i < N.length; i++) {
+            for (let i = 0; i < N.length; i++)
                 N[i].onMouseUp()
-            }
             canvasAPI.nodesOnDrag.length = 0
             document.removeEventListener("mousemove", handleMouseMove)
             canvasAPI.clear()
+            canvasAPI.ctx.canvas.style.cursor = "default"
         }, {once: true})
     }
 }

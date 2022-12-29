@@ -4,6 +4,8 @@ import drawRoundedRect from "../../utils/draw-rounded-rect";
 import drawNodeHeader from "../../utils/draw-node-header";
 import IO_RADIUS from "../../static/IO_RADIUS";
 import HEADER_HEIGHT from "../../static/HEADER_HEIGHT";
+import type Canvas from "../Canvas";
+import DATA_TYPES from "../../static/DATA_TYPES";
 
 const types = {
     vec2: 0,
@@ -42,8 +44,8 @@ export default class ShaderNode {
     y: number
     id: string
     uniformName: string
-    output: MutableObject[]
-    inputs: MutableObject[]
+    output: Output[]
+    inputs: Input[]
 
     constructor(inputs: Input[], output?: Output[], dynamicInputs?: boolean) {
         this.x = 10
@@ -52,13 +54,30 @@ export default class ShaderNode {
         this.uniformName = "DYNAMIC_" + this.id.replaceAll("-", "_")
         this.output = output
         this.inputs = inputs ? inputs : []
-        this.height = HEADER_HEIGHT + Math.max(this.output.length, this.inputs.filter(e => e.accept !== undefined).length) * 20
+        this.height = HEADER_HEIGHT + (Math.max(this.output.length, this.inputs.filter(e => e.accept !== undefined).length) + .5) * (HEADER_HEIGHT - 5)
         this.dynamicInputs = dynamicInputs
     }
 
     static getMinimalType(...typesToCompare): string | undefined {
         const min = Math.min(...typesToCompare.map(t => types[t]).filter(t => t !== undefined))
         return typesInverted[min]
+    }
+
+    static getIOColor(attribute: Output | Input) {
+        const type = attribute.type || attribute.accept?.[0]
+        switch (type) {
+            case DATA_TYPES.VEC2:
+            case DATA_TYPES.COLOR:
+            case DATA_TYPES.VEC3:
+            case DATA_TYPES.VEC4:
+                return "orange"
+            case DATA_TYPES.TEXTURE:
+                return "purple"
+            case DATA_TYPES.ANY:
+                return "white"
+            default:
+                return "#999"
+        }
     }
 
     checkHeaderClick(x: number, y: number): boolean {
@@ -72,13 +91,15 @@ export default class ShaderNode {
         return x >= XI && x < XF && y >= Y && y < Y + this.height - HEADER_HEIGHT
     }
 
-    checkAgainstIO(x: number, y: number, asInput?:boolean): Output | undefined {
+    checkAgainstIO(x: number, y: number, asInput?: boolean): Output | undefined {
         const node = this
         const xN = node.x, yN = node.y, w = node.width
         let returnData
-        const R2 = IO_RADIUS**2
+        const R2 = IO_RADIUS ** 2
         const T = asInput ? this.inputs : this.output
         for (let i = 0; i < T.length; i++) {
+            if (asInput && !T[i].accept || T[i].disabled)
+                continue
             const H_OFFSET = 20
             const H = 20
             const Y = yN + H * (i + 1) + H_OFFSET
@@ -86,7 +107,7 @@ export default class ShaderNode {
             const yIO = Y - IO_RADIUS
 
             console.log(x, y, xIO, yIO)
-            if ((x - xIO)**2 + (y - yIO)**2 < R2) {
+            if ((x - xIO) ** 2 + (y - yIO) ** 2 < R2) {
                 returnData = T[i]
                 break
             }
@@ -94,17 +115,21 @@ export default class ShaderNode {
         return returnData
     }
 
-    drawToCanvas(ctx: CanvasRenderingContext2D, selectionMap: Map<string, ShaderNode>) {
-        drawRoundedRect(ctx, this, 3, selectionMap.get(this.id) !== undefined)
+    drawToCanvas(ctx: CanvasRenderingContext2D, canvasAPI: Canvas) {
+        drawRoundedRect(ctx, this, 3, canvasAPI.selectionMap.get(this.id) !== undefined, canvasAPI.lastSelection === this)
         drawNodeHeader(ctx, this)
+
         for (let j = 0; j < this.output.length; j++) {
             const C = this.output[j]
             drawIO(ctx, true, this, j, C)
         }
+        let validIndex = 0
         for (let j = 0; j < this.inputs.length; j++) {
             const C = this.inputs[j]
-            if (C.accept)
-                drawIO(ctx, false, this, j, C)
+            if (C.accept || C.type === DATA_TYPES.COLOR || C.type === DATA_TYPES.TEXTURE) {
+                drawIO(ctx, false, this, validIndex, C)
+                validIndex++
+            }
         }
     }
 }
