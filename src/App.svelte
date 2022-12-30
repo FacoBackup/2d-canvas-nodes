@@ -4,17 +4,20 @@
 	import {onMount} from "svelte";
     import Canvas from "./shader-editor/lib/Canvas";
     import MakeVector from "./shader-editor/lib/nodes/MakeVector";
+    import Comment from "./shader-editor/lib/nodes/Comment";
 
     const nodes = [new Material(), new MakeVector(), new RGB(), new RGB()]
 	const canvas = new Canvas()
 	onMount(() => {
         canvas.initialize(<HTMLCanvasElement>document.getElementById("canvas"))
-        canvas.nodes = nodes
+        canvas.nodes.push(...nodes)
+        canvas.clear()
 	})
 </script>
 
 
 <div class="wrapper">
+    <button on:click={() => canvas.comments.push(new Comment(10, 10)) || canvas.clear()}></button>
     <canvas id="canvas"></canvas>
 </div>
 

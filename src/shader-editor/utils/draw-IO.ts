@@ -5,6 +5,7 @@ import drawRoundedRect from "./draw-rounded-rect";
 import IO_RADIUS from "../static/IO_RADIUS";
 import HEADER_HEIGHT from "../static/HEADER_HEIGHT";
 import ShaderNode, {Input, Output} from "../lib/nodes/ShaderNode";
+import getIOPosition from "./get-IO-position";
 
 export default function drawIO(ctx: CanvasRenderingContext2D, asOutput:boolean, node:ShaderNode, index:number, attribute:Input|Output) {
     ctx.font = asOutput ? "bold 8px Arial" : "8px Arial";
@@ -13,24 +14,27 @@ export default function drawIO(ctx: CanvasRenderingContext2D, asOutput:boolean, 
     const isTexture = attribute.type === DATA_TYPES.TEXTURE
     const enabled = !attribute.disabled
     const label = attribute.label
-    const x = node.x, y = node.y, w = node.width
+
+
+    const linePosition = getIOPosition(index, node, asOutput)
+
+    let X = linePosition.x
     const LABEL_OFFSET = 13
-    const H = HEADER_HEIGHT - 5
-    const Y = y + H * (index + 2)
-    let X = !asOutput ? x : x + w
-    const YA = Y - IO_RADIUS
+    const H = linePosition.height
+    const W = linePosition.width
+    const Y = linePosition.rowY
+    const YA = linePosition.y
     const labelSize = ctx.measureText(label).width + LABEL_OFFSET
     const T_SIZE = ctx.measureText("T").width
 
     ctx.beginPath()
-
 
     if(isColor && !attribute.accept){
         const data = node[attribute.key]
         if(!data)
             return;
         ctx.fillStyle = `rgb(${data[0]*255},${data[1]*255},${data[2]*255})`
-        ctx.roundRect(X + IO_RADIUS, Y - H/2, w/2, H, 3)
+        ctx.roundRect(X + IO_RADIUS, Y - H/2, W/2, H, 3)
         ctx.fill()
         return
     }

@@ -6,6 +6,8 @@ import IO_RADIUS from "../../static/IO_RADIUS";
 import HEADER_HEIGHT from "../../static/HEADER_HEIGHT";
 import type Canvas from "../Canvas";
 import DATA_TYPES from "../../static/DATA_TYPES";
+import getIOPosition from "../../utils/get-IO-position";
+import Draggable from "../Draggable";
 
 const types = {
     vec2: 0,
@@ -33,28 +35,27 @@ export interface Input {
 }
 
 
-export default class ShaderNode {
+export default class ShaderNode extends Draggable {
     [key: string]: any
 
+
+    minWidth = 150
+    uniform = false
+    targetCommentID: string | undefined
     canBeDeleted = true
     dynamicInputs = false
-    width = 200
-    height = HEADER_HEIGHT
-    x: number
-    y: number
-    id: string
     uniformName: string
     output: Output[]
     inputs: Input[]
 
     constructor(inputs: Input[], output?: Output[], dynamicInputs?: boolean) {
+        super()
         this.x = 10
         this.y = 10
-        this.id = crypto.randomUUID()
         this.uniformName = "DYNAMIC_" + this.id.replaceAll("-", "_")
         this.output = output
         this.inputs = inputs ? inputs : []
-        this.height = HEADER_HEIGHT + (Math.max(this.output.length, this.inputs.filter(e => e.accept !== undefined).length) + .5) * (HEADER_HEIGHT - 5)
+        this.minHeight = this.height = HEADER_HEIGHT + (Math.max(this.output.length, this.inputs.filter(e => e.accept !== undefined).length) + .5) * (HEADER_HEIGHT - 5)
         this.dynamicInputs = dynamicInputs
     }
 
@@ -80,44 +81,28 @@ export default class ShaderNode {
         }
     }
 
-    checkHeaderClick(x: number, y: number): boolean {
-        return x >= this.x && x < this.x + this.width && y >= this.y && y < this.y + HEADER_HEIGHT
-    }
-
-    checkBodyClick(x: number, y: number): boolean {
-        const XI = this.x - 4, XF = this.x + 4 + this.width
-
-        const Y = this.y + HEADER_HEIGHT
-        return x >= XI && x < XF && y >= Y && y < Y + this.height - HEADER_HEIGHT
-    }
-
-    checkAgainstIO(x: number, y: number, asInput?: boolean): Output | undefined {
-        const node = this
-        const xN = node.x, yN = node.y, w = node.width
-        let returnData
+    checkAgainstIO<T>(x: number, y: number, asInput?: boolean): T {
         const R2 = IO_RADIUS ** 2
-        const T = asInput ? this.inputs : this.output
-        for (let i = 0; i < T.length; i++) {
-            if (asInput && !T[i].accept || T[i].disabled)
-                continue
-            const H_OFFSET = 20
-            const H = 20
-            const Y = yN + H * (i + 1) + H_OFFSET
-            const xIO = asInput ? xN : xN + w
-            const yIO = Y - IO_RADIUS
+        const data = asInput ? this.inputs : this.output
+        let validIndex = 0
 
-            console.log(x, y, xIO, yIO)
-            if ((x - xIO) ** 2 + (y - yIO) ** 2 < R2) {
-                returnData = T[i]
-                break
-            }
+        for (let i = 0; i < data.length; i++) {
+            if (asInput && !data[i].accept || data[i].disabled)
+                continue
+
+            const linePosition = getIOPosition(validIndex, this, !asInput)
+            const xIO = linePosition.x
+            const yIO = linePosition.y
+            validIndex++
+
+            if ((x - xIO) ** 2 + (y - yIO) ** 2 < R2)
+                return <T>data[i]
         }
-        return returnData
     }
 
     drawToCanvas(ctx: CanvasRenderingContext2D, canvasAPI: Canvas) {
-        drawRoundedRect(ctx, this, 3, canvasAPI.selectionMap.get(this.id) !== undefined, canvasAPI.lastSelection === this)
-        drawNodeHeader(ctx, this)
+        drawRoundedRect(ctx, this, 3, canvasAPI.selectionMap.get(this.id) !== undefined, canvasAPI.lastSelection === this, canvasAPI.rectColor)
+        drawNodeHeader(ctx, this, this.type)
 
         for (let j = 0; j < this.output.length; j++) {
             const C = this.output[j]
@@ -131,5 +116,6 @@ export default class ShaderNode {
                 validIndex++
             }
         }
+        this.drawScale(ctx)
     }
 }

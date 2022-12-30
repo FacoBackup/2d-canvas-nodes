@@ -1,7 +1,7 @@
 import Canvas from "../lib/Canvas";
 import ShaderLink from "../lib/nodes/ShaderLink";
 import type ShaderNode from "../lib/nodes/ShaderNode";
-import type {Output} from "../lib/nodes/ShaderNode";
+import type {Output, Input} from "../lib/nodes/ShaderNode";
 
 export default function handleLink(canvasAPI:Canvas, event:MouseEvent,x:number,y:number, sourceNode:ShaderNode, sourceIO:Output){
     const N = canvasAPI.nodes
@@ -12,9 +12,14 @@ export default function handleLink(canvasAPI:Canvas, event:MouseEvent,x:number,y
         const node = N[i]
         const onBody = node.checkBodyClick(X, Y)
         if (onBody) {
-            const targetIO = node.checkAgainstIO(X, Y, true)
+            const targetIO = node.checkAgainstIO<Input>(X, Y, true)
             if (targetIO && targetIO.accept.includes(sourceIO.type)) {
-                canvasAPI.links.push(new ShaderLink(node, sourceNode, targetIO, sourceIO))
+                const foundExisting = canvasAPI.links.findIndex(l => l.targetRef === targetIO)
+                const newLink = new ShaderLink(node, sourceNode, targetIO, sourceIO)
+                if(foundExisting > -1)
+                    canvasAPI.links[foundExisting] = newLink
+                else
+                    canvasAPI.links.push(newLink)
             }else if(targetIO){
                 // TODO - DO ALERT FOR NOT ACCEPTING TYPE
             }

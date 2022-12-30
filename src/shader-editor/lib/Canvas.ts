@@ -1,9 +1,9 @@
-import dragNode from "../utils/drag-node";
 import getMousedownEvent from "../utils/get-mousedown-event";
 import getCanvasZoomEvent from "../utils/get-canvas-zoom-event";
 import type ShaderNode from "./nodes/ShaderNode";
 import type ShaderLink from "./nodes/ShaderLink";
 import drawLink from "../utils/draw-link";
+import type Comment from "./nodes/Comment";
 
 
 export default class Canvas {
@@ -15,32 +15,23 @@ export default class Canvas {
     static fontSize = 10
     static rectColor = "#353535"
     static borderColor = "#6b6b6b"
-    #nodes:ShaderNode[] = []
-    #links:ShaderLink[] = []
-    set links(nodes) {
-        this.#links = nodes
-        this.clear()
+
+    get rectColor() {
+        return Canvas.rectColor
     }
 
-    get links() {
-        return this.#links
-    }
+    nodes: ShaderNode[] = []
+    links: ShaderLink[] = []
+    comments: Comment[] = []
 
-    set nodes(nodes) {
-        this.#nodes = nodes
-        this.clear()
-    }
 
-    get nodes() {
-        return this.#nodes
-    }
 
     ctx?: CanvasRenderingContext2D
     private canvas?: HTMLCanvasElement
     private initialized = false
-    nodesOnDrag: { onMouseUp:Function,onMouseMove:Function }[] = []
-    selectionMap = new Map<string, ShaderNode>()
-    lastSelection:ShaderNode|undefined
+
+    selectionMap = new Map<string, ShaderNode|Comment>()
+    lastSelection: ShaderNode | Comment | undefined
 
     updateCanvasSize() {
         this.canvas.width = Canvas.width
@@ -76,19 +67,24 @@ export default class Canvas {
     }
 
     private draw() {
-        const L = this.#links
-        const LS = L.length
-        for (let i = 0; i < LS; i++) {
-            const link = L[i]
-            drawLink(this.ctx, link)
+        const ctx = this.ctx
+        const C = this.comments
+        const CS = C.length
+        for (let i = 0; i < CS; i++) {
+            C[i].draw(ctx, this)
         }
 
-        const N = this.#nodes
+        const L = this.links
+        const LS = L.length
+        for (let i = 0; i < LS; i++)
+            drawLink(ctx, L[i])
+
+
+        const N = this.nodes
         const NS = N.length
-        for (let i = 0; i < NS; i++) {
-            const node = N[i]
-            node.drawToCanvas(this.ctx, this)
-        }
+        for (let i = 0; i < NS; i++)
+            N[i].drawToCanvas(ctx, this)
+
 
     }
 }

@@ -1,8 +1,8 @@
 import type ShaderNode from "./ShaderNode";
-import type {Output} from "./ShaderNode";
+import type {Input, Output} from "./ShaderNode";
 
 export default class ShaderLink {
-    targetRef:Output
+    targetRef:Input
     sourceRef:Output
     targetNode:ShaderNode
     sourceNode:ShaderNode
@@ -18,7 +18,7 @@ export default class ShaderLink {
         return l.target + "-" + l.source
     }
 
-    constructor(target:ShaderNode, source:ShaderNode, tR:Output, sR:Output) {
+    constructor(target:ShaderNode, source:ShaderNode, tR:Input, sR:Output) {
         this.targetNode = target
         this.sourceNode = source
         this.targetRef = tR
