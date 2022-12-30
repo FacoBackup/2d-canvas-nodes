@@ -1,5 +1,5 @@
 import Canvas from "../lib/Canvas";
-import type {Output} from "../lib/nodes/ShaderNode";
+import type {Input, Output} from "../lib/nodes/ShaderNode";
 import type MutableObject from "../static/MutableObject";
 import drawBezierCurve from "./draw-bezier-curve";
 import IO_RADIUS from "../static/IO_RADIUS";
@@ -12,6 +12,7 @@ import Draggable from "../lib/Draggable";
 
 export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasElement): (this: HTMLCanvasElement, ev: WheelEvent) => void {
     const nodesOnDrag: { onMouseUp: Function, onMouseMove: Function }[] = []
+    const ctx = canvasAPI.ctx
 
     const parentElement = canvas.parentElement
     let isOnScroll = false
@@ -19,20 +20,24 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
     let parentBBox: MutableObject
     const tempLink = {x: 0, y: 0, x1: 0, y1: 0}
 
+    function drawTempLink(event:MouseEvent) {
+        tempLink.x1 = (event.clientX + parentBBox.x + parentElement.scrollLeft) / Canvas.scale
+        tempLink.y1 = (event.clientY + parentBBox.y + parentElement.scrollTop - IO_RADIUS ** 2) / Canvas.scale
+
+        canvasAPI.clear()
+        ctx.strokeStyle = "#0095ff"
+        drawBezierCurve(ctx, tempLink.x, tempLink.x1, tempLink.y, tempLink.y1)
+    }
+
     const handleMouseMove = (event) => {
         if (isOnScroll) {
             parentElement.scrollTop -= event.movementY
             parentElement.scrollLeft -= event.movementX
         } else {
             const S = nodesOnDrag.length
-            if (IO !== undefined) {
-                tempLink.x1 = (event.clientX + parentBBox.x + parentElement.scrollLeft - IO_RADIUS) / Canvas.scale
-                tempLink.y1 = (event.clientY + parentBBox.y + parentElement.scrollTop- IO_RADIUS) / Canvas.scale
-
-                canvasAPI.clear()
-                canvasAPI.ctx.strokeStyle = "#0095ff"
-                drawBezierCurve(canvasAPI.ctx, tempLink.x, tempLink.x1, tempLink.y, tempLink.y1)
-            } else if (S > 0) {
+            if (IO !== undefined)
+                drawTempLink(event)
+             else if (S > 0) {
                 for (let i = 0; i < S; i++)
                     nodesOnDrag[i].onMouseMove(event)
                 canvasAPI.clear()
@@ -69,7 +74,7 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
                         nodesOnDrag.push(Draggable.drag(e, node, true))
                     else if (!e.ctrlKey) {
                         const isOnScale = node.checkAgainstScale(X, Y)
-                        if(isOnScale)
+                        if (isOnScale)
                             nodesOnDrag.push(Draggable.drag(e, node, false))
                         else {
                             const output = node.checkAgainstIO<Output>(X, Y)
@@ -78,6 +83,22 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
                                 const position = getIOPosition(node.output.indexOf(output), node, true)
                                 tempLink.x = position.x
                                 tempLink.y = position.y
+                            } else {
+                                const input = node.checkAgainstIO<Input>(X, Y, true)
+                                if (!input)
+                                    break
+                                const F = canvasAPI.links.findIndex(l => l.targetRef === input)
+                                if (F === -1)
+                                    break
+                                const found = canvasAPI.links[F]
+                                const originalPosition = getIOPosition(found.sourceNode.output.indexOf(found.sourceRef), found.sourceNode, true)
+                                IO = [found.sourceNode, found.sourceRef]
+
+                                canvasAPI.links.splice(F, 1)
+
+                                tempLink.x = originalPosition.x
+                                tempLink.y = originalPosition.y
+                                drawTempLink(e)
                             }
                         }
                     }
@@ -98,7 +119,7 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
                             nodesOnDrag.push(Draggable.drag(e, comment, true))
                         else if (!e.ctrlKey) {
                             const isOnScale = comment.checkAgainstScale(X, Y)
-                            if(isOnScale)
+                            if (isOnScale)
                                 nodesOnDrag.push(Draggable.drag(e, comment, false))
                         }
                         canvasAPI.selectionMap.set(comment.id, comment)
@@ -108,7 +129,7 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
                 }
 
             if (nodesOnDrag.length > 0 || IO)
-                canvasAPI.ctx.canvas.style.cursor = "grabbing"
+                ctx.canvas.style.cursor = "grabbing"
             canvasAPI.clear()
         }
         document.addEventListener("mousemove", handleMouseMove)
@@ -123,7 +144,7 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
             nodesOnDrag.length = 0
             document.removeEventListener("mousemove", handleMouseMove)
             canvasAPI.clear()
-            canvasAPI.ctx.canvas.style.cursor = "default"
+            ctx.canvas.style.cursor = "default"
         }, {once: true})
     }
 }

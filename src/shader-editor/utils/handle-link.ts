@@ -4,6 +4,8 @@ import type ShaderNode from "../lib/nodes/ShaderNode";
 import type {Output, Input} from "../lib/nodes/ShaderNode";
 
 export default function handleLink(canvasAPI:Canvas, event:MouseEvent,x:number,y:number, sourceNode:ShaderNode, sourceIO:Output){
+    if(!sourceIO || !sourceNode)
+        return
     const N = canvasAPI.nodes
     const X = (event.clientX - x) / Canvas.scale
     const Y = (event.clientY - y) / Canvas.scale
