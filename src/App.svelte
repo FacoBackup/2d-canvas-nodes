@@ -17,7 +17,10 @@
 
 
 <div class="wrapper">
-    <button on:click={() => canvas.comments.push(new Comment(10, 10)) || canvas.clear()}></button>
+    <button on:click={() =>{
+        canvas.comments.push(new Comment(10, 10))
+        canvas.clear()
+    }}>ADD COMMENT</button>
     <canvas id="canvas"></canvas>
 </div>
 
