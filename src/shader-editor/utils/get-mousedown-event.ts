@@ -6,10 +6,11 @@ import ShaderNode from "../lib/nodes/ShaderNode";
 import Draggable from "../lib/nodes/Draggable";
 import CanvasRenderer from "./CanvasRenderer";
 import ShaderLink from "../lib/nodes/ShaderLink";
+import type Comment from "../lib/nodes/Comment";
 
 
 export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasElement): (this: HTMLCanvasElement, ev: WheelEvent) => void {
-    const nodesOnDrag: { onMouseUp: Function, onMouseMove: Function }[] = []
+    const nodesOnDrag: { onMouseUp: Function, onMouseMove: Function, node:Draggable}[] = []
     const ctx = canvasAPI.ctx
 
     const parentElement = canvas.parentElement
@@ -68,12 +69,16 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
                 const onBody = node.checkBodyClick(X, Y)
                 const onHeader = node.checkHeaderClick(X, Y)
                 if (onHeader || onBody) {
-                    if (onHeader)
+                    if (onHeader) {
                         nodesOnDrag.push(Draggable.drag(e, node, true))
+                        node.isOnDrag = true
+                    }
                     else if (!e.ctrlKey) {
                         const isOnScale = node.checkAgainstScale(X, Y)
-                        if (isOnScale)
+                        if (isOnScale) {
                             nodesOnDrag.push(Draggable.drag(e, node, false))
+                            node.isOnDrag = true
+                        }
                         else {
                             const output = node.checkAgainstIO<Output>(X, Y)
                             if (output) {
@@ -113,12 +118,16 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
                     const onBody = comment.checkBodyClick(X, Y)
                     const onHeader = comment.checkHeaderClick(X, Y)
                     if (onHeader || onBody) {
-                        if (onHeader)
+                        if (onHeader) {
                             nodesOnDrag.push(Draggable.drag(e, comment, true))
+                            comment.isOnDrag = true
+                        }
                         else if (!e.ctrlKey) {
                             const isOnScale = comment.checkAgainstScale(X, Y)
-                            if (isOnScale)
+                            if (isOnScale) {
                                 nodesOnDrag.push(Draggable.drag(e, comment, false))
+                                comment.isOnDrag = true
+                            }
                         }
                         canvasAPI.selectionMap.set(comment.id, comment)
                         canvasAPI.lastSelection = comment
@@ -137,8 +146,10 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
             IO = undefined
             tempLink.x = tempLink.y = tempLink.x1 = tempLink.y1 = 0
 
-            for (let i = 0; i < nodesOnDrag.length; i++)
+            for (let i = 0; i < nodesOnDrag.length; i++) {
+                nodesOnDrag[i].node.isOnDrag = false
                 nodesOnDrag[i].onMouseUp()
+            }
             nodesOnDrag.length = 0
             document.removeEventListener("mousemove", handleMouseMove)
             canvasAPI.clear()

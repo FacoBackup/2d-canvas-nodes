@@ -78,6 +78,18 @@ export default class CanvasRenderer{
 
         ctx.closePath()
     }
+    static drawNodePosition(ctx: CanvasRenderingContext2D, node:Comment|ShaderNode) {
+        ctx.font= "bold 10px Arial"
+
+        const TEXT = `X ${node.x} Y ${node.y} W ${node.width} H ${node.height}`
+        let Y = node.y - 10
+        if(Y < 0)
+            Y = node.y + node.height + 10
+        ctx.beginPath()
+        ctx.fillStyle = "white"
+        ctx.fillText(TEXT, node.x , Y )
+
+    }
     static drawLink(ctx: CanvasRenderingContext2D, link: ShaderLink) {
         const T = link.targetNode, S = link.sourceNode
         const x1 = S.x + S.width, x2 = T.x,
