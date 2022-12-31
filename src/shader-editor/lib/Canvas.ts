@@ -2,8 +2,8 @@ import getMousedownEvent from "../utils/get-mousedown-event";
 import getCanvasZoomEvent from "../utils/get-canvas-zoom-event";
 import type ShaderNode from "./nodes/ShaderNode";
 import type ShaderLink from "./nodes/ShaderLink";
-import drawLink from "../utils/draw-link";
 import type Comment from "./nodes/Comment";
+import CanvasRenderer from "../utils/CanvasRenderer";
 
 
 export default class Canvas {
@@ -77,7 +77,7 @@ export default class Canvas {
         const L = this.links
         const LS = L.length
         for (let i = 0; i < LS; i++)
-            drawLink(ctx, L[i])
+            CanvasRenderer.drawLink(ctx, L[i])
 
 
         const N = this.nodes

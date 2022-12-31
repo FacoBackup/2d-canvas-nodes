@@ -1,13 +1,9 @@
-import type MutableObject from "../../static/MutableObject";
-import drawIO from "../../utils/draw-IO";
-import drawRoundedRect from "../../utils/draw-rounded-rect";
-import drawNodeHeader from "../../utils/draw-node-header";
 import IO_RADIUS from "../../static/IO_RADIUS";
 import HEADER_HEIGHT from "../../static/HEADER_HEIGHT";
 import type Canvas from "../Canvas";
 import DATA_TYPES from "../../static/DATA_TYPES";
-import getIOPosition from "../../utils/get-IO-position";
-import Draggable from "../Draggable";
+import Draggable from "./Draggable";
+import CanvasRenderer from "../../utils/CanvasRenderer";
 
 const types = {
     vec2: 0,
@@ -90,7 +86,7 @@ export default class ShaderNode extends Draggable {
             if (asInput && !data[i].accept || data[i].disabled)
                 continue
 
-            const linePosition = getIOPosition(validIndex, this, !asInput)
+            const linePosition = ShaderNode.getIOPosition(validIndex, this, !asInput)
             const xIO = linePosition.x
             const yIO = linePosition.y
             validIndex++
@@ -101,21 +97,32 @@ export default class ShaderNode extends Draggable {
     }
 
     drawToCanvas(ctx: CanvasRenderingContext2D, canvasAPI: Canvas) {
-        drawRoundedRect(ctx, this, 3, canvasAPI.selectionMap.get(this.id) !== undefined, canvasAPI.lastSelection === this, canvasAPI.rectColor)
-        drawNodeHeader(ctx, this, this.type)
+        CanvasRenderer.drawRoundedRect(ctx, this, 3, canvasAPI.selectionMap.get(this.id) !== undefined, canvasAPI.lastSelection === this, canvasAPI.rectColor)
+        CanvasRenderer.drawNodeHeader(ctx, this, this.type)
 
         for (let j = 0; j < this.output.length; j++) {
             const C = this.output[j]
-            drawIO(ctx, true, this, j, C)
+            CanvasRenderer.drawIO(ctx, true, this, j, C)
         }
         let validIndex = 0
         for (let j = 0; j < this.inputs.length; j++) {
             const C = this.inputs[j]
             if (C.accept || C.type === DATA_TYPES.COLOR || C.type === DATA_TYPES.TEXTURE) {
-                drawIO(ctx, false, this, validIndex, C)
+                CanvasRenderer.drawIO(ctx, false, this, validIndex, C)
                 validIndex++
             }
         }
         this.drawScale(ctx)
+    }
+
+    static getIOPosition(index: number, node: ShaderNode, asOutput: boolean): { x: number, y: number, height: number, width: number, rowY: number } {
+        const xN = node.x, yN = node.y, w = node.width
+        const H = HEADER_HEIGHT - 5
+        const Y = yN + H * (index + 2)
+        const xIO = !asOutput ? xN : xN + w
+        const yIO = Y - IO_RADIUS
+
+
+        return {x: xIO, y: yIO, height: H, width: w, rowY: Y}
     }
 }

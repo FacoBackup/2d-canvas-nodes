@@ -1,13 +1,11 @@
 import Canvas from "../lib/Canvas";
 import type {Input, Output} from "../lib/nodes/ShaderNode";
 import type MutableObject from "../static/MutableObject";
-import drawBezierCurve from "./draw-bezier-curve";
 import IO_RADIUS from "../static/IO_RADIUS";
+import ShaderNode from "../lib/nodes/ShaderNode";
+import Draggable from "../lib/nodes/Draggable";
+import CanvasRenderer from "./CanvasRenderer";
 import ShaderLink from "../lib/nodes/ShaderLink";
-import type ShaderNode from "../lib/nodes/ShaderNode";
-import handleLink from "./handle-link";
-import getIOPosition from "./get-IO-position";
-import Draggable from "../lib/Draggable";
 
 
 export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasElement): (this: HTMLCanvasElement, ev: WheelEvent) => void {
@@ -20,13 +18,13 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
     let parentBBox: MutableObject
     const tempLink = {x: 0, y: 0, x1: 0, y1: 0}
 
-    function drawTempLink(event:MouseEvent) {
+    function drawTempLink(event: MouseEvent) {
         tempLink.x1 = (event.clientX + parentBBox.x + parentElement.scrollLeft) / Canvas.scale
         tempLink.y1 = (event.clientY + parentBBox.y + parentElement.scrollTop - IO_RADIUS ** 2) / Canvas.scale
 
         canvasAPI.clear()
         ctx.strokeStyle = "#0095ff"
-        drawBezierCurve(ctx, tempLink.x, tempLink.x1, tempLink.y, tempLink.y1)
+        CanvasRenderer.drawBezierCurve(ctx, tempLink.x, tempLink.x1, tempLink.y, tempLink.y1)
     }
 
     const handleMouseMove = (event) => {
@@ -37,7 +35,7 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
             const S = nodesOnDrag.length
             if (IO !== undefined)
                 drawTempLink(event)
-             else if (S > 0) {
+            else if (S > 0) {
                 for (let i = 0; i < S; i++)
                     nodesOnDrag[i].onMouseMove(event)
                 canvasAPI.clear()
@@ -80,7 +78,7 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
                             const output = node.checkAgainstIO<Output>(X, Y)
                             if (output) {
                                 IO = [node, output]
-                                const position = getIOPosition(node.output.indexOf(output), node, true)
+                                const position = ShaderNode.getIOPosition(node.output.indexOf(output), node, true)
                                 tempLink.x = position.x
                                 tempLink.y = position.y
                             } else {
@@ -91,7 +89,7 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
                                 if (F === -1)
                                     break
                                 const found = canvasAPI.links[F]
-                                const originalPosition = getIOPosition(found.sourceNode.output.indexOf(found.sourceRef), found.sourceNode, true)
+                                const originalPosition = ShaderNode.getIOPosition(found.sourceNode.output.indexOf(found.sourceRef), found.sourceNode, true)
                                 IO = [found.sourceNode, found.sourceRef]
 
                                 canvasAPI.links.splice(F, 1)
@@ -134,7 +132,7 @@ export default function getMousedownEvent(canvasAPI: Canvas, canvas: HTMLCanvasE
         }
         document.addEventListener("mousemove", handleMouseMove)
         document.addEventListener("mouseup", e => {
-            if (IO) handleLink(canvasAPI, e, BBox.x, BBox.y, IO[0], IO[1])
+            if (IO) ShaderLink.handleLink(canvasAPI, e, BBox.x, BBox.y, IO[0], IO[1])
             isOnScroll = false
             IO = undefined
             tempLink.x = tempLink.y = tempLink.x1 = tempLink.y1 = 0

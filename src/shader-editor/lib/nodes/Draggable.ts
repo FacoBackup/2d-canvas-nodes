@@ -1,7 +1,7 @@
-import HEADER_HEIGHT from "../static/HEADER_HEIGHT";
-import type MutableObject from "../static/MutableObject";
-import Canvas from "./Canvas";
-import SCALE_BUTTON_SIZE from "../static/SCALE_BUTTON_SIZE";
+import HEADER_HEIGHT from "../../static/HEADER_HEIGHT";
+import type MutableObject from "../../static/MutableObject";
+import Canvas from "../Canvas";
+import SCALE_BUTTON_SIZE from "../../static/SCALE_BUTTON_SIZE";
 
 export default class Draggable {
     readonly id = crypto.randomUUID()

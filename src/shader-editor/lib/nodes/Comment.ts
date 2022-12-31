@@ -1,9 +1,7 @@
 import type ShaderNode from "./ShaderNode"
 import type Canvas from "../Canvas";
-import HEADER_HEIGHT from "../../static/HEADER_HEIGHT";
-import drawRoundedRect from "../../utils/draw-rounded-rect";
-import drawNodeHeader from "../../utils/draw-node-header";
-import Draggable from "../Draggable";
+import Draggable from "./Draggable";
+import CanvasRenderer from "../../utils/CanvasRenderer";
 
 export default class Comment extends Draggable {
     name = "New Comment"
@@ -55,8 +53,8 @@ export default class Comment extends Draggable {
     }
 
     draw(ctx: CanvasRenderingContext2D, canvasAPI: Canvas) {
-        drawRoundedRect(ctx, this, 3, canvasAPI.selectionMap.get(this.id) !== undefined, canvasAPI.lastSelection === this, `rgba(${this.color}, .5)`)
-        drawNodeHeader(ctx, this)
+        CanvasRenderer.drawRoundedRect(ctx, this, 3, canvasAPI.selectionMap.get(this.id) !== undefined, canvasAPI.lastSelection === this, `rgba(${this.color}, .5)`)
+        CanvasRenderer.drawNodeHeader(ctx, this)
         this.drawScale(ctx)
     }
 }
